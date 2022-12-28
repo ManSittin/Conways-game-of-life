@@ -1,4 +1,5 @@
 // --module-path "C:\Program Files\Java\javafx-sdk-19\lib" --add-modules javafx.controls,javafx.fxml
+import javafx.animation.KeyFrame;
 import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -6,6 +7,7 @@ import javafx.stage.Stage;
 import javafx.scene.control.*;
 import javafx.scene.canvas.*;
 import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 
 public class ConwayView {
@@ -26,7 +28,7 @@ public class ConwayView {
 
     double frametime; // used to wait between frames
 
-    Timeline timeline;
+    Timeline timeline; // don't think I'll use this
 
     public ConwayView(Stage s, ConwayModel m){
         stage = s;
@@ -54,7 +56,6 @@ public class ConwayView {
 
         canvas = new Canvas(600,600); // might need to change size later
 
-        timeline = new Timeline();
     }
 
     private void drawBoard(){

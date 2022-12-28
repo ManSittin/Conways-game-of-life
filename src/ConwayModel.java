@@ -38,13 +38,15 @@ public class ConwayModel {
     }
 
     public void updateFrame(){
-        // update nextboard with all the current points. FUCK YOU AUTOCORRECT
+        // update nextboard with all the current points.
         for(int i = 0; i < sizeX; i++){
             for(int j = 0; j < sizeY; j++){
                 nextBoard[i][j] = checkPoint(i,j);
             }
         }
-        // when done update the current board
+    }
+
+    public void confirmBoard(){
         board = nextBoard;
     }
 
