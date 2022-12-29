@@ -9,6 +9,7 @@ public class ConwayModel {
     private boolean[][] board, nextBoard;
 
     public ConwayModel(){
+        positions = new ArrayList<>();
         for(int i = -1; i < 2; i++){
             for(int j = -1; j <2; j++){
                 if(j != 0 || i != 0){
@@ -37,7 +38,7 @@ public class ConwayModel {
         nextBoard[x][y] = !board[x][y];
     }
 
-    public void updateFrame(){
+    public void updateNextBoard(){
         // update nextboard with all the current points.
         for(int i = 0; i < sizeX; i++){
             for(int j = 0; j < sizeY; j++){
@@ -87,6 +88,14 @@ public class ConwayModel {
 
     public int getSizeY(){
         return sizeY;
+    }
+
+    public void setBoard(boolean[][] b){
+        board = b;
+    }
+
+    public boolean[][] getBoard(){
+        return board;
     }
 
 
