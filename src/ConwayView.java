@@ -141,6 +141,8 @@ public class ConwayView {
                 timeline.setRate(Integer.parseInt(frametimeField.getText()));
 
                 model.initializeBoard(model.getSizeX(), model.getSizeY());
+                originalBoard = model.cloneBoard();
+                iterations = 0;
                 clearCanvas();
                 drawGrid();
             }catch(NumberFormatException exc){
