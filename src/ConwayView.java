@@ -114,14 +114,17 @@ public class ConwayView {
                 originalBoard = model.cloneBoard();
             }
             started = true;
+            iterationsLabel.setVisible(true);
         });
 
         restartButton.setOnMouseClicked(e->{
             model.setBoard(originalBoard);
-            iterations = 0;
             started = true;
             updateBoard();
             started = false;
+            iterations = 0;
+            iterationsLabel.setText("Iterations: " + iterations);
+
         });
 
         stopButton.setOnMouseClicked(e-> {
@@ -142,9 +145,11 @@ public class ConwayView {
 
                 model.initializeBoard(model.getSizeX(), model.getSizeY());
                 originalBoard = model.cloneBoard();
-                iterations = 0;
                 clearCanvas();
                 drawGrid();
+                iterations = 0;
+                iterationsLabel.setText("Iterations: " + iterations);
+
             }catch(NumberFormatException exc){
                 errorLabel.setVisible(true);
             }
@@ -155,7 +160,7 @@ public class ConwayView {
         topControls.setSpacing(20);
         topControls.setAlignment(Pos.CENTER);
 
-        HBox bottomControls = new HBox(nextButton, startButton, stopButton, restartButton);
+        HBox bottomControls = new HBox(iterationsLabel, nextButton, startButton, stopButton, restartButton);
         bottomControls.setSpacing(20);
         bottomControls.setAlignment(Pos.CENTER);
 
