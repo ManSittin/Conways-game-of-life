@@ -26,11 +26,13 @@ public class ConwayModel {
         sizeX = x;
         sizeY = y;
         board = new boolean[sizeX][sizeY];
+        nextBoard = new boolean[sizeX][sizeY];
     }
 
-    public void updateBoardPoint(int x, int y){
+    public boolean updateBoardPoint(int x, int y){
         // used for starting board
         board[x][y] = !board[x][y];
+        return board[x][y];
     }
 
     public void updateNextBoardPoint(int x, int y){
@@ -40,6 +42,7 @@ public class ConwayModel {
 
     public void updateNextBoard(){
         // update nextboard with all the current points.
+        // CURRENT BUG IS THAT WHILE THE ARRAYS ARE DIFFERENT, THE SUB-ARRAYS ARE SHARED SOMEHOW
         for(int i = 0; i < sizeX; i++){
             for(int j = 0; j < sizeY; j++){
                 nextBoard[i][j] = checkPoint(i,j);
@@ -48,7 +51,9 @@ public class ConwayModel {
     }
 
     public void confirmBoard(){
-        board = nextBoard;
+        for(int i = 0; i < board.length; i++){
+            board[i] = nextBoard[i].clone();
+        }
     }
 
     private boolean checkPoint(int x, int y){
@@ -60,8 +65,8 @@ public class ConwayModel {
             // count the number of neighbors
             checkX = x + p[0];
             checkY = y + p[1];
-            boolean xinbounds = checkX > 0 && checkX < sizeX;
-            boolean yinbounds = checkY > 0 && checkY <sizeY;
+            boolean xinbounds = checkX >= 0 && checkX < sizeX;
+            boolean yinbounds = checkY >= 0 && checkY <sizeY;
             if(xinbounds && yinbounds){
                 // if the point being checked is inbounds
                 if(board[checkX][checkY]){neighbors++;}
@@ -72,6 +77,14 @@ public class ConwayModel {
             return 1 < neighbors && neighbors < 4;
         }
         else { return neighbors == 3;}
+    }
+
+    public boolean[][] cloneBoard() {
+        boolean[][] newBoard = new boolean[sizeX][sizeY];
+        for(int i = 0; i < board.length; i++){
+            newBoard[i] = board[i].clone();
+        }
+        return newBoard;
     }
 
     public void setSizeX(int num){
@@ -91,7 +104,7 @@ public class ConwayModel {
     }
 
     public void setBoard(boolean[][] b){
-        board = b;
+        board = b.clone();
     }
 
     public boolean[][] getBoard(){
