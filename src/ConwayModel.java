@@ -1,15 +1,30 @@
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+import java.lang.Math;
 
 public class ConwayModel {
 
     private int sizeX, sizeY;
+
+    private double scale;
+
+    private HashMap<point, Integer> currentTiles, nextTiles, tempTiles, originalTiles;
 
     private ArrayList<int[]> positions;
 
     private boolean[][] board, nextBoard;
 
     public ConwayModel(){
+        currentTiles = new HashMap<point, Integer>();
+        nextTiles = new HashMap<point, Integer>();
+        tempTiles = new HashMap<point, Integer>();
+        originalTiles = new HashMap<point, Integer>();
+        scale = 10;
+
+        /*
         positions = new ArrayList<>();
+
         for(int i = -1; i < 2; i++){
             for(int j = -1; j <2; j++){
                 if(j != 0 || i != 0){
@@ -20,27 +35,100 @@ public class ConwayModel {
                 }
             }
         }
+        */
     }
 
     public void initializeBoard(int x, int y){
+
+        /* PROBABLY WON'T NEED THIS?
         sizeX = x;
         sizeY = y;
         board = new boolean[sizeX][sizeY];
         nextBoard = new boolean[sizeX][sizeY];
+        */
     }
 
-    public boolean updateBoardPoint(int x, int y){
+    public void updateTile(point p){ // originally returned an int
         // used for starting board
-        board[x][y] = !board[x][y];
-        return board[x][y];
+        // ALSO PROBABLY WON'T NEED THIS?
+        int i;
+        if (!currentTiles.containsKey(p)){
+            currentTiles.put(p,1);
+            //return 1;
+        }
+        else{
+            i = currentTiles.get(p);
+            i = java.lang.Math.abs(i-1);
+            currentTiles.replace(p,i); // switch the point
+            //return i; // return the new value of the point
+        }
+
+        //board[x][y] = !board[x][y];
+        //return board[x][y];
     }
 
-    public void updateNextBoardPoint(int x, int y){
+    public void updateNextBoardPoint(int x, int y){ // NOT USED !!!!!!!!!!!!
         // used for updating frames, might not be needed.
         nextBoard[x][y] = !board[x][y];
+
     }
 
-    public void updateNextBoard(){
+    public void updateNextTiles() {
+        int i;
+        for (point p : currentTiles.keySet()){
+            point left = new point(p.x-1, p.y);
+            point right = new point(p.x+1, p.y);
+            point up = new point(p.x, p.y-1);
+            point down = new point(p.x, p.y+1);
+
+            i = nextTiles.getOrDefault(left,0);
+            nextTiles.put(left, i+1);
+
+            i = nextTiles.getOrDefault(right,0);
+            nextTiles.put(right, i+1);
+
+            i = nextTiles.getOrDefault(up,0);
+            nextTiles.put(up, i+1);
+
+            i = nextTiles.getOrDefault(down,0);
+            nextTiles.put(down, i+1);
+        }
+
+    }
+
+    public void updateCurrTiles() {
+        // For drawing the scene, update the currentTiles map with what the next iteration should be
+        int i;
+        for (point p : nextTiles.keySet()) {
+            // IF IT'S A TILE ALREADY -> MUST HAVE 2 <= N <= 3 NEIGHBORS TO BE ALIVE NEXT ITERATION
+            // IF IT'S NOT A TILE ALREADY -> MUST HAVE N = 3 NEIGHBORS TO BE ALIVE NEXT ITERATION
+            if (currentTiles.containsKey(p) && nextTiles.containsKey(p)) { // does exist now
+                i = nextTiles.get(p);
+                if (2 <= i && i <= 3) tempTiles.put(p, 1);
+            } else if (nextTiles.containsKey(p)) { // doesn't exist now but has neighboring tiles
+                i = nextTiles.get(p);
+                if (i == 3) tempTiles.put(p, 1);
+            }
+
+        }
+        // AT THIS POINT TEMPTILES SHOULD BE CORRECT,
+        // COPY TEMP INTO CURR, THEN CLEAR TEMP AND NEXT
+        currentTiles = new HashMap<point, Integer>();
+        copyTiles(tempTiles, currentTiles);
+        tempTiles = new HashMap<point, Integer>();
+        nextTiles = new HashMap<point, Integer>();
+    }
+
+
+    public void copyTiles(HashMap<point, Integer> source, HashMap<point, Integer> dest){
+        for(point p : source.keySet()) {
+            if (source.get(p) != 0) {
+                dest.put(p, 1);
+            }
+        }
+    }
+
+    public void updateNextBoard(){ // huh??
         // update nextboard with all the current points.
         // CURRENT BUG IS THAT WHILE THE ARRAYS ARE DIFFERENT, THE SUB-ARRAYS ARE SHARED SOMEHOW
         for(int i = 0; i < sizeX; i++){
@@ -50,13 +138,37 @@ public class ConwayModel {
         }
     }
 
-    public void confirmBoard(){
+    public void confirmBoard(){ // huh??
         for(int i = 0; i < board.length; i++){
             board[i] = nextBoard[i].clone();
         }
     }
 
-    private boolean checkPoint(int x, int y){
+    public HashMap<point, Integer> getCurrentTiles(){
+        return this.currentTiles;
+    }
+
+    public HashMap<point, Integer> getNextTiles(){
+        return this.nextTiles;
+    }
+
+    public HashMap<point, Integer> getTempTiles(){
+        return this.tempTiles;
+    }
+
+    public HashMap<point, Integer> getOriginalTiles(){
+        return this.originalTiles;
+    }
+
+    public void setScale(double s){
+        this.scale = s;
+    }
+
+    public double getScale(){
+        return this.scale;
+    }
+
+    private boolean checkPoint(int x, int y){ // NOT NEEDED
         // needs to check if the point should be alive
         int neighbors = 0;
         int checkX = 0;
@@ -79,7 +191,7 @@ public class ConwayModel {
         else { return neighbors == 3;}
     }
 
-    public boolean[][] cloneBoard() {
+    public boolean[][] cloneBoard() { // NOT NEEDED
         boolean[][] newBoard = new boolean[sizeX][sizeY];
         for(int i = 0; i < board.length; i++){
             newBoard[i] = board[i].clone();
@@ -87,27 +199,27 @@ public class ConwayModel {
         return newBoard;
     }
 
-    public void setSizeX(int num){
+    public void setSizeX(int num){ // NOT NEEDED
         sizeX = num;
     }
 
-    public void setSizeY(int num){
+    public void setSizeY(int num){ // NOT NEEDED
         sizeY = num;
     }
 
-    public int getSizeX(){
+    public int getSizeX(){ // NOT NEEDED
         return sizeX;
     }
 
-    public int getSizeY(){
+    public int getSizeY(){ // NOT NEEDED
         return sizeY;
     }
 
-    public void setBoard(boolean[][] b){
+    public void setBoard(boolean[][] b){ // NOT NEEDED
         board = b.clone();
     }
 
-    public boolean[][] getBoard(){
+    public boolean[][] getBoard(){ // NOT NEEDED
         return board;
     }
 

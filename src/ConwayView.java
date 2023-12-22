@@ -13,6 +13,7 @@ import javafx.animation.Timeline;
 import javafx.util.Duration;
 
 import java.sql.Time;
+import java.util.HashMap;
 
 
 public class ConwayView {
@@ -33,7 +34,9 @@ public class ConwayView {
     boolean started; // used to allow/disallow the user to draw on squares
 
     boolean[][] originalBoard;
-    double frametime; // used to wait between frames
+
+    point position;
+    double frametime, offsetX, offsetY; // used to wait between frames
 
     int iterations = 0;
 
@@ -66,6 +69,9 @@ public class ConwayView {
         sizeYField = new TextField("squares");
         frametimeField = new TextField("seconds");
 
+        offsetX = 0;
+        offsetY = 0;
+
         HBox frametimeBox = new HBox(frametimeLabel, frametimeField);
         frametimeBox.setSpacing(10);
         HBox widthBox = new HBox(widthLabel, sizeXField);
@@ -83,18 +89,35 @@ public class ConwayView {
         timeline.play();
 
         canvas.setOnMouseClicked(e-> {
+            double mouseX = e.getX();
+            double mouseY = e.getY();
+            System.out.println("X: " + mouseX + ", Y: " + mouseY);
+            if (!started){
+                point p = mouseToPoint(mouseX, mouseY);
+                System.out.println("X: " + p.x + ", Y: " + p.y);
+                model.updateTile(p);
+                started = true;
+                updateBoard();
+                drawGrid();
+                started = false;
+            }
+
+        });
+
+        /*
+        canvas.setOnMouseClicked(e-> {
             // need to see what they clicked on
             double mouseX = e.getX();
             double mouseY = e.getY();
             System.out.println("X: " + mouseX + ", Y: " + mouseY);
-            if(!started){ // if started don't do anything the animation is playing
+            if(!started){ // if started we're moving
                 int[] squarePositions = checkMouseGrid(mouseX, mouseY);
                 System.out.println(squarePositions[0]);
                 System.out.println(squarePositions[1]);
                 double widthX = canvas.getWidth()/model.getSizeX();
                 double widthY = canvas.getHeight()/model.getSizeY();
 
-                if(model.updateBoardPoint(squarePositions[0], squarePositions[1])){
+                if(model.updateBoardPoint(squarePositions[0], squarePositions[1])==1){
                     gc.fillRect(widthX*squarePositions[0], widthY*squarePositions[1], widthX, widthY);
                 }
                 else{
@@ -104,6 +127,20 @@ public class ConwayView {
             }
         });
 
+        canvas.setOnMouseDragEntered(e-> {
+
+
+
+        });
+
+        canvas.setOnScrollStarted(e-> {
+            System.out.println(e.getDeltaY());
+            System.out.println(e.getMultiplierY());
+
+
+        });
+        */
+
         exitButton.setOnMouseClicked(e-> {
             System.exit(0);
         } );
@@ -111,19 +148,21 @@ public class ConwayView {
         startButton.setOnMouseClicked(e-> {
             // start the game
             if(iterations == 0) {
-                originalBoard = model.cloneBoard();
+                //originalBoard = model.cloneBoard();
+                model.copyTiles(model.getCurrentTiles(), model.getOriginalTiles());
             }
             started = true;
             iterationsLabel.setVisible(true);
         });
 
         restartButton.setOnMouseClicked(e->{
-            model.setBoard(originalBoard);
+            //model.setBoard(originalBoard);
+            model.copyTiles(model.getOriginalTiles(), model.getCurrentTiles());
             started = true;
             updateBoard();
             started = false;
             iterations = 0;
-            iterationsLabel.setText("Iterations: " + iterations);
+            iterationsLabel.setText("Iterations: 0");
 
         });
 
@@ -139,12 +178,14 @@ public class ConwayView {
 
         applyButton.setOnMouseClicked(e-> {
             try{
-                model.setSizeX(Integer.parseInt(sizeXField.getText()));
-                model.setSizeY(Integer.parseInt(sizeXField.getText()));
+                //model.setSizeX(Integer.parseInt(sizeXField.getText()));
+                //model.setSizeY(Integer.parseInt(sizeXField.getText()));
+                model.setScale(Double.parseDouble(sizeXField.getText()));
                 timeline.setRate(Integer.parseInt(frametimeField.getText()));
+                model.copyTiles(model.getOriginalTiles(),model.getCurrentTiles());
 
-                model.initializeBoard(model.getSizeX(), model.getSizeY());
-                originalBoard = model.cloneBoard();
+                //model.initializeBoard(model.getSizeX(), model.getSizeY());
+                //originalBoard = model.cloneBoard();
                 clearCanvas();
                 drawGrid();
                 iterations = 0;
@@ -179,28 +220,52 @@ public class ConwayView {
     
     private void drawGrid(){
         gc.setStroke(Color.BLACK); // just in case for now, need to go through all drawing commands later to simplify
-        gc.strokeRect(0,0, canvas.getWidth(), canvas.getHeight());
-        // need to calculate square width
-        double widthX = canvas.getWidth()/model.getSizeX();
-        double widthY = canvas.getHeight()/model.getSizeY();
+        double scale = model.getScale();
 
-        for(int i = 1; i < model.getSizeX(); i++){
-            // start drawing vertical lines from the left, on the right side
+        // need to calculate square size, can be done with either width or height, doesn't matter very much which one
+        double squareSize = getSquareSize();
+        double lineOffsetX = offsetX % scale;
+        double lineOffsetY = offsetY % scale;
+
+        for(int i = 1; i < scale; i++){
+            // start drawing vertical lines from the left, to the right side
             // don't need the number of squares, need one less, so it starts at 1
-            gc.strokeLine(widthX * i,0, widthX * i, canvas.getHeight());
+            gc.strokeLine(squareSize * i ,0, squareSize * i, canvas.getHeight());
         }
 
-        for(int j = 1; j < model.getSizeY(); j++){
-            gc.strokeLine(0, widthY * j, canvas.getWidth(), widthY * j);
+        for(int j = 1; j < scale; j++){
+            gc.strokeLine(0, squareSize * j, canvas.getWidth(), squareSize * j);
         }
+        gc.strokeRect(0,0, canvas.getWidth(), canvas.getHeight()); // outline the canvas
+    }
+
+    private double getSquareSize(){
+        return canvas.getWidth()/model.getScale();
+    }
+
+    private point mouseToPoint(double mouseX, double mouseY){
+        int x = (int) ((mouseX + offsetX)/getSquareSize());
+        int y = (int) ((mouseY + offsetY)/getSquareSize());
+        return new point(x, y);
     }
 
     private void updateBoard(){
+        // Draw the current state of the Tiles, update nextTiles
         // draw the current board stored in the model, also calculate the next frame
         if(started) {
             clearCanvas();
+            double squareSize = getSquareSize();
+            HashMap<point,Integer> currTiles = model.getCurrentTiles();
+            for (point p : currTiles.keySet()){
+                if (currTiles.get(p) > 0){ // If the point should be drawn,
+                    double posX = p.x * squareSize + offsetX; // should be left side of square
+                    double posY = p.y * squareSize + offsetY; // should be top of square
+                    //if () // If the point is in view, draw it red
+                    gc.fillRect(posX, posY, squareSize,squareSize);
+                }
+            }
             // draw the accurate frame
-            //drawGrid(); I think this is better after drawing the board
+            /*
             boolean[][] board = model.getBoard();
             double widthX = canvas.getWidth()/model.getSizeX();
             double widthY = canvas.getHeight()/model.getSizeY();
@@ -212,30 +277,35 @@ public class ConwayView {
                     }
                 }
             }
+             */
+
             drawGrid();
             // end with:
             iterations++;
             iterationsLabel.setText("Iterations: " + iterations);
-            model.updateNextBoard();
-            model.confirmBoard();
+            //model.updateNextTiles();
+            //model.updateCurrTiles();
+            //model.updateNextBoard();
+            //model.confirmBoard();
         }
     }
 
     private int[] checkMouseGrid(double x, double y){
+        // This function checks where the mouse is, and returns which point on the grid the mouse is on.
         double squareWidth = canvas.getWidth()/ model.getSizeX();
         double squareHeight = canvas.getHeight()/model.getSizeY();
 
-        int posX = checkMouseOneD(x, squareWidth, model.getSizeX());
-        int posY = checkMouseOneD(y, squareHeight, model.getSizeY());
+        int posX = checkMouseOneDim(x, squareWidth, model.getSizeX());
+        int posY = checkMouseOneDim(y, squareHeight, model.getSizeY());
 
         int[] pos = {posX, posY};
         return pos;
     }
 
-    private int checkMouseOneD(double point, double intervalSize, int numIntervals){
+    private int checkMouseOneDim(double p, double intervalSize, int numIntervals){
         for(int i = 1; i <= numIntervals; i++){
-            point = point - intervalSize;
-            if(point < 0){
+            p = p - intervalSize;
+            if(p < 0){
                 return i - 1;
             }
         }
