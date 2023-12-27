@@ -22,7 +22,6 @@ public class ConwayModel {
         originalTiles = new HashMap<point, Integer>();
         scale = 10;
 
-        /*
         positions = new ArrayList<>();
 
         for(int i = -1; i < 2; i++){
@@ -35,7 +34,6 @@ public class ConwayModel {
                 }
             }
         }
-        */
     }
 
     public void initializeBoard(int x, int y){
@@ -52,14 +50,18 @@ public class ConwayModel {
         // used for starting board
         // ALSO PROBABLY WON'T NEED THIS?
         int i;
-        if (!currentTiles.containsKey(p)){
+        //if (!currentTiles.containsKey(p)){ old method
+        if (currentTiles.getOrDefault(p,0) == 0){
             currentTiles.put(p,1);
             //return 1;
         }
         else{
-            i = currentTiles.get(p);
-            i = java.lang.Math.abs(i-1);
-            currentTiles.replace(p,i); // switch the point
+            currentTiles.remove(p);
+
+            // old method changed the point value to 0 instead of removing it
+            //i = currentTiles.get(p);
+            //i = java.lang.Math.abs(i-1);
+            //currentTiles.replace(p,i); // switch the point
             //return i; // return the new value of the point
         }
 
@@ -76,22 +78,11 @@ public class ConwayModel {
     public void updateNextTiles() {
         int i;
         for (point p : currentTiles.keySet()){
-            point left = new point(p.x-1, p.y);
-            point right = new point(p.x+1, p.y);
-            point up = new point(p.x, p.y-1);
-            point down = new point(p.x, p.y+1);
-
-            i = nextTiles.getOrDefault(left,0);
-            nextTiles.put(left, i+1);
-
-            i = nextTiles.getOrDefault(right,0);
-            nextTiles.put(right, i+1);
-
-            i = nextTiles.getOrDefault(up,0);
-            nextTiles.put(up, i+1);
-
-            i = nextTiles.getOrDefault(down,0);
-            nextTiles.put(down, i+1);
+            for(int[] pos:positions) {
+                point check = new point(p.x + pos[0], p.y + pos[1]);
+                i = nextTiles.getOrDefault(check,0);
+                nextTiles.put(check, i + 1);
+            }
         }
 
     }
@@ -102,8 +93,8 @@ public class ConwayModel {
         for (point p : nextTiles.keySet()) {
             // IF IT'S A TILE ALREADY -> MUST HAVE 2 <= N <= 3 NEIGHBORS TO BE ALIVE NEXT ITERATION
             // IF IT'S NOT A TILE ALREADY -> MUST HAVE N = 3 NEIGHBORS TO BE ALIVE NEXT ITERATION
-            if (currentTiles.containsKey(p) && nextTiles.containsKey(p)) { // does exist now
-                i = nextTiles.get(p);
+            if (currentTiles.containsKey(p)) { // does exist now
+                i = nextTiles.getOrDefault(p,0);
                 if (2 <= i && i <= 3) tempTiles.put(p, 1);
             } else if (nextTiles.containsKey(p)) { // doesn't exist now but has neighboring tiles
                 i = nextTiles.get(p);

@@ -96,10 +96,7 @@ public class ConwayView {
                 point p = mouseToPoint(mouseX, mouseY);
                 System.out.println("X: " + p.x + ", Y: " + p.y);
                 model.updateTile(p);
-                started = true;
                 updateBoard();
-                drawGrid();
-                started = false;
             }
 
         });
@@ -230,11 +227,11 @@ public class ConwayView {
         for(int i = 1; i < scale; i++){
             // start drawing vertical lines from the left, to the right side
             // don't need the number of squares, need one less, so it starts at 1
-            gc.strokeLine(squareSize * i ,0, squareSize * i, canvas.getHeight());
+            gc.strokeLine(lineOffsetX + squareSize * i ,0, lineOffsetX + squareSize * i, canvas.getHeight());
         }
 
         for(int j = 1; j < scale; j++){
-            gc.strokeLine(0, squareSize * j, canvas.getWidth(), squareSize * j);
+            gc.strokeLine(0, lineOffsetY + squareSize * j, canvas.getWidth(), lineOffsetY + squareSize * j);
         }
         gc.strokeRect(0,0, canvas.getWidth(), canvas.getHeight()); // outline the canvas
     }
@@ -250,9 +247,9 @@ public class ConwayView {
     }
 
     private void updateBoard(){
-        // Draw the current state of the Tiles, update nextTiles
+        // Draw the current state of the Tiles, if started, update nextTiles and increase iterations
         // draw the current board stored in the model, also calculate the next frame
-        if(started) {
+        /*if(started) {
             clearCanvas();
             double squareSize = getSquareSize();
             HashMap<point,Integer> currTiles = model.getCurrentTiles();
@@ -264,6 +261,22 @@ public class ConwayView {
                     gc.fillRect(posX, posY, squareSize,squareSize);
                 }
             }
+
+         */
+        clearCanvas();
+        double squareSize = getSquareSize();
+        HashMap<point,Integer> currTiles = model.getCurrentTiles();
+
+        double posX, posY;
+        for (point p : currTiles.keySet()) {
+            if (currTiles.getOrDefault(p, 0) > 0) { // If the point should be drawn,
+                posX = p.x * squareSize + offsetX;
+                posY = p.y * squareSize + offsetY;
+                if (cullSquare(posX, posY, squareSize)) {
+                    gc.fillRect(posX, posY, squareSize, squareSize);
+                }
+            }
+        }
             // draw the accurate frame
             /*
             boolean[][] board = model.getBoard();
@@ -278,16 +291,18 @@ public class ConwayView {
                 }
             }
              */
+        drawGrid();
+        // end with:
+        if (started) {
 
-            drawGrid();
-            // end with:
             iterations++;
             iterationsLabel.setText("Iterations: " + iterations);
-            //model.updateNextTiles();
-            //model.updateCurrTiles();
-            //model.updateNextBoard();
-            //model.confirmBoard();
+            model.updateNextTiles();
+            model.updateCurrTiles();
         }
+        //model.updateNextBoard();
+        //model.confirmBoard();
+
     }
 
     private int[] checkMouseGrid(double x, double y){
@@ -310,6 +325,15 @@ public class ConwayView {
             }
         }
         return numIntervals - 1;
+    }
+
+    private boolean cullSquare(double x, double y, double size){
+        // returns whether a square can be seen or not.
+        // if the right side of the square is too far left, don't draw or
+        // if the left side of the square is too far right, don't draw and
+        // if the bottom of the square is too high, don't draw or
+        // if the top of the square is too far below don't draw
+        return !(((x+size < 0) || (x > canvas.getWidth())) && (y+size < 0) || (y > canvas.getHeight()));
     }
 
     private void clearCanvas(){gc.clearRect(0,0, canvas.getWidth(), canvas.getHeight());}
